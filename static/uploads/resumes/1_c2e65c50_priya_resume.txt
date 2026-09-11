@@ -1,0 +1,5 @@
+
+Priya Sharma
+Education: B.Tech in CSE at NIT Jaipur
+Skills: Python, SQL, PostgreSQL, Excel, Power BI, Web Development
+Projects: Placement Analytics Dashboard in Power BI with SQL queries
