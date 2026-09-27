@@ -48,7 +48,7 @@ function splitWords(el) {
 function initIntro() {
   const titleEls = gsap.utils.toArray(".intro__title, .intro__title1");
   const subEl = document.querySelector(".intro__subtitle");
-  if (!titleEls.length || !subEl) return;
+  if (!titleEls.length) return;
 
   const titleGroups = titleEls.map((el) => splitWords(el).flat());
   const titleWords = titleGroups.flat();
@@ -76,7 +76,7 @@ function initIntro() {
   if (els.eyebrow) gsap.set(els.eyebrow, { opacity: 0, y: -22, scale: 0.92 });
   if (els.rule) gsap.set(els.rule, { scaleX: 0 });
   gsap.set(pick([titleWords]), { yPercent: 120, opacity: 0 });
-  gsap.set(pick([els.subtitle]), { opacity: 0, y: 22 });
+  if (els.subtitle) gsap.set(els.subtitle, { opacity: 0, y: 22 });
   gsap.set(pick([els.tags]), { opacity: 0, y: 16, scale: 0.9 });
   gsap.set(pick([els.actions]), { opacity: 0, y: 24 });
   gsap.set(pick([els.glow, els.glow2]), { opacity: 0, scale: 0.6 });
@@ -127,17 +127,19 @@ function initIntro() {
     );
   });
 
-  // 4. Subtitle Smooth Reveal
-  tl.to(
-    pick([els.subtitle]),
-    {
-      opacity: 1,
-      y: 0,
-      duration: 0.85,
-      ease: "power2.out",
-    },
-    "-=0.4"
-  );
+  // 4. Subtitle Smooth Reveal (if present)
+  if (els.subtitle) {
+    tl.to(
+      els.subtitle,
+      {
+        opacity: 1,
+        y: 0,
+        duration: 0.85,
+        ease: "power2.out",
+      },
+      "-=0.4"
+    );
+  }
 
   // 5. Feature Tag Pills Stagger
   tl.to(
@@ -1241,56 +1243,35 @@ function initCommunityFollow() {
         load().catch(showPeopleError);
     };
 
-    const card = (person, isFollowed) => {
+    const card = (person) => {
         const match = person.match || {};
-        const scored = match.score !== null && match.score !== undefined;
         const shared = (match.interests || []).concat(match.skills || []);
         const mineSet = new Set(shared);
 
         const tags = (person.skills || [])
-            .slice(0, 4)
             .map((id) => '<span class="tag' + (mineSet.has(id) ? ' tag--shared' : '') + '">' + esc(labelOf("skills", id)) + '</span>')
             .join("");
 
-        const eduText = (person.institution || "Engineering University") + (person.stage ? " • " + person.stage : "");
-
         return (
-            '<article class="person-card' + (isFollowed ? " is-following" : "") + '" role="listitem" data-open-person="' + esc(person.id) + '">' +
+            '<article class="person-card" role="listitem" data-open-person="' + esc(person.id) + '" title="Tap to view full profile">' +
             '<div class="person-card__head">' +
             '<span class="person-card__avatar" aria-hidden="true">' + esc(person.name.charAt(0).toUpperCase()) + "</span>" +
             '<div style="min-width: 0; flex: 1;">' +
             '<h3 class="person-card__name">' + esc(person.name) + "</h3>" +
-            '<span class="person-card__handle">' + esc(person.handle || "") + "</span>" +
             "</div>" +
             "</div>" +
-            '<p class="person-card__edu" title="' + esc(eduText) + '">🎓 ' + esc(eduText) + '</p>' +
-            '<div class="person-card__meta">' +
-            '<span class="person-card__role">' + esc(person.roleLabel || person.role || "") + "</span>" +
-            (scored ? '<span class="person-card__score">' + esc(match.score) + '% Match</span>' : '<span class="person-card__score" style="background:#f1f5f9; color:#64748b; border-color:#e2e8f0;">Community</span>') +
-            "</div>" +
-            '<p class="person-card__blurb">' + esc(person.blurb || "") + "</p>" +
             (tags ? '<div class="person-card__tags">' + tags + "</div>" : "") +
-            '<div class="person-card__foot">' +
-            '<div style="display:flex; flex-direction:column;">' +
-            '<span class="person-card__followers"><b data-followers-count="' + esc(person.id) + '">' + esc(person.followers || 0) + '</b> followers</span>' +
-            '<span class="person-card__click-hint">View profile &rarr;</span>' +
-            '</div>' +
-            '<button class="follow-btn' + (isFollowed ? " is-following" : "") + '" type="button" data-follow="' + esc(person.id) + '" aria-pressed="' + (isFollowed ? "true" : "false") + '">' +
-            (isFollowed ? "✓ Following" : "+ Follow") +
-            "</button>" +
-            "</div>" +
             "</article>"
         );
     };
 
     const renderPeople = (list) => {
-        const followed = following();
         if (!list.length) {
             slide.innerHTML = '<p class="people__empty">No member suggestions found.</p>';
             return;
         }
 
-        slide.innerHTML = list.map((p) => card(p, followed.indexOf(p.id) > -1)).join("");
+        slide.innerHTML = list.map((p) => card(p)).join("");
 
         if (status) {
             const bits = [];
@@ -1366,15 +1347,27 @@ function initCommunityFollow() {
         filter.addEventListener("input", () => renderChips());
     }
 
-    // Dropdown accordion toggles
+    // Dropdown accordion toggles (Mutual exclusion: only 1 open at a time, both closed by default)
     document.querySelectorAll("[data-dropdown-trigger]").forEach((trigger) => {
         trigger.addEventListener("click", () => {
             const dropdown = trigger.closest(".filter-dropdown");
             if (!dropdown) return;
-            const isOpen = dropdown.classList.toggle("is-open");
-            trigger.setAttribute("aria-expanded", String(isOpen));
-            if (isOpen && dropdown.dataset.dropdown === "skills" && filter) {
-                setTimeout(() => filter.focus(), 150);
+            const willOpen = !dropdown.classList.contains("is-open");
+
+            // Close all dropdowns first
+            document.querySelectorAll(".filter-dropdown").forEach((d) => {
+                d.classList.remove("is-open");
+                const tr = d.querySelector("[data-dropdown-trigger]");
+                if (tr) tr.setAttribute("aria-expanded", "false");
+            });
+
+            // If it was closed, open it now
+            if (willOpen) {
+                dropdown.classList.add("is-open");
+                trigger.setAttribute("aria-expanded", "true");
+                if (dropdown.dataset.dropdown === "skills" && filter) {
+                    setTimeout(() => filter.focus(), 150);
+                }
             }
         });
     });

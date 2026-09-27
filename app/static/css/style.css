@@ -4462,27 +4462,32 @@ a {
 .person-card {
     background: #ffffff;
     border: 1.5px solid var(--border-light);
-    border-radius: 20px;
-    padding: 24px 22px 20px;
+    border-radius: 18px;
+    padding: 20px 22px 18px;
     box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
-    transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     display: flex;
     flex-direction: column;
     cursor: pointer;
     position: relative;
+    user-select: none;
 }
 
 .person-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 16px 32px -8px rgba(15, 118, 110, 0.14);
+    transform: translateY(-4px);
+    box-shadow: 0 14px 28px -6px rgba(15, 118, 110, 0.14);
     border-color: var(--primary-teal);
+}
+
+.person-card:active {
+    transform: scale(0.98);
 }
 
 .person-card__head {
     display: flex;
     align-items: center;
     gap: 12px;
-    margin-bottom: 8px;
+    margin-bottom: 12px;
 }
 
 .person-card__avatar {
