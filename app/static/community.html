@@ -135,23 +135,103 @@
             </div>
           </div>
 
-          <!-- Tag Pickers -->
+          <!-- Tag Pickers (Dropdown Boxes with Smooth Animation) -->
           <div class="people__picker" data-reveal>
-            <div class="people__row">
-              <span class="people__rowlabel" id="people-interests-label">Your interests</span>
-              <div class="people__chips" id="people-interests" role="group" aria-labelledby="people-interests-label">
+            <div class="filter-dropdowns-grid">
+              <!-- Dropdown 1: Your Interests -->
+              <div class="filter-dropdown is-open" id="dropdown-interests" data-dropdown="interests">
+                <button class="filter-dropdown__trigger" type="button" aria-expanded="true" aria-controls="dropdown-panel-interests" id="trigger-interests" data-dropdown-trigger="interests">
+                  <div class="filter-dropdown__lead">
+                    <span class="filter-dropdown__icon" aria-hidden="true">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+                      </svg>
+                    </span>
+                    <div class="filter-dropdown__text">
+                      <span class="filter-dropdown__title">Your Interests</span>
+                      <span class="filter-dropdown__subtitle" data-dropdown-subtitle="interests">Select domains you care about</span>
+                    </div>
+                  </div>
+                  <div class="filter-dropdown__meta">
+                    <span class="filter-dropdown__badge" data-dropdown-count="interests" style="display: none;">0</span>
+                    <span class="filter-dropdown__chevron" aria-hidden="true">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                      </svg>
+                    </span>
+                  </div>
+                </button>
+
+                <!-- Selected Pills Preview (Visible when collapsed or having active tags) -->
+                <div class="filter-dropdown__preview" data-dropdown-preview="interests" style="display: none;"></div>
+
+                <!-- Collapsible / Expandable Panel with CSS Grid Animation -->
+                <div class="filter-dropdown__collapse" id="dropdown-panel-interests" role="region" aria-labelledby="trigger-interests">
+                  <div class="filter-dropdown__content">
+                    <div class="filter-dropdown__topbar">
+                      <span class="filter-dropdown__hint">Click tags below to re-rank peer recommendations</span>
+                      <button class="filter-dropdown__clear" type="button" data-clear-tags="interests" style="display: none;">Clear all</button>
+                    </div>
+                    <div class="people__chips" id="people-interests" role="group" aria-labelledby="trigger-interests"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Dropdown 2: Your Skills -->
+              <div class="filter-dropdown is-open" id="dropdown-skills" data-dropdown="skills">
+                <button class="filter-dropdown__trigger" type="button" aria-expanded="true" aria-controls="dropdown-panel-skills" id="trigger-skills" data-dropdown-trigger="skills">
+                  <div class="filter-dropdown__lead">
+                    <span class="filter-dropdown__icon filter-dropdown__icon--skills" aria-hidden="true">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="16 18 22 12 16 6"></polyline>
+                        <polyline points="8 6 2 12 8 18"></polyline>
+                      </svg>
+                    </span>
+                    <div class="filter-dropdown__text">
+                      <span class="filter-dropdown__title">Your Skills</span>
+                      <span class="filter-dropdown__subtitle" data-dropdown-subtitle="skills">Filter by your strengths</span>
+                    </div>
+                  </div>
+                  <div class="filter-dropdown__meta">
+                    <span class="filter-dropdown__badge" data-dropdown-count="skills" style="display: none;">0</span>
+                    <span class="filter-dropdown__chevron" aria-hidden="true">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                      </svg>
+                    </span>
+                  </div>
+                </button>
+
+                <!-- Selected Pills Preview (Visible when collapsed or having active tags) -->
+                <div class="filter-dropdown__preview" data-dropdown-preview="skills" style="display: none;"></div>
+
+                <!-- Collapsible / Expandable Panel with CSS Grid Animation -->
+                <div class="filter-dropdown__collapse" id="dropdown-panel-skills" role="region" aria-labelledby="trigger-skills">
+                  <div class="filter-dropdown__content">
+                    <div class="filter-dropdown__search-wrap">
+                      <svg class="filter-dropdown__search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                      </svg>
+                      <input class="filter-dropdown__search inp" id="people-skill-filter" type="search" placeholder="Search skills (e.g. python, react, sql)..." autocomplete="off" />
+                      <button class="filter-dropdown__clear" type="button" data-clear-tags="skills" style="display: none;">Clear all</button>
+                    </div>
+                    <div class="people__chips" id="people-skills" role="group" aria-labelledby="trigger-skills"></div>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div class="people__row">
-              <span class="people__rowlabel" id="people-skills-label">Your skills</span>
-              <input class="people__filter" id="people-skill-filter" type="search" placeholder="Filter skills..."
-                aria-label="Filter the skill list" autocomplete="off" />
-              <div class="people__chips" id="people-skills" role="group" aria-labelledby="people-skills-label">
+            <!-- Filter Status Bar & Reset Button -->
+            <div class="filter-dropdown__statusbar">
+              <div class="filter-dropdown__status-text" id="people-status" role="status" aria-live="polite">
+                Loading members&hellip;
               </div>
+              <button class="filter-dropdown__reset-btn" type="button" id="people-reset-all" style="display: none;">
+                ✕ Reset All Filters
+              </button>
             </div>
-
-            <p class="people__status" id="people-status" role="status" aria-live="polite"></p>
           </div>
 
           <!-- Member Cards Container -->

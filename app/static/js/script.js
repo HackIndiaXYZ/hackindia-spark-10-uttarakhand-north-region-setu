@@ -1109,8 +1109,95 @@ function initCommunityFollow() {
 
                 renderChips();
                 renderPeople(data.people || []);
+                updateDropdownUI();
                 announceRanked(data);
             });
+    };
+
+    const updateDropdownUI = () => {
+        // Update Interests Dropdown
+        const intCountEl = document.querySelector('[data-dropdown-count="interests"]');
+        const intSubEl = document.querySelector('[data-dropdown-subtitle="interests"]');
+        const intClearBtn = document.querySelector('[data-clear-tags="interests"]');
+        const intPrevEl = document.querySelector('[data-dropdown-preview="interests"]');
+        const intDrop = document.getElementById("dropdown-interests");
+
+        if (intCountEl) {
+            if (mine.interests.length > 0) {
+                intCountEl.style.display = "inline-block";
+                intCountEl.textContent = mine.interests.length + (mine.interests.length === 1 ? " domain" : " domains");
+            } else {
+                intCountEl.style.display = "none";
+            }
+        }
+        if (intSubEl) {
+            intSubEl.textContent = mine.interests.length > 0
+                ? mine.interests.length + " domain" + (mine.interests.length === 1 ? "" : "s") + " selected • Click to adjust"
+                : "Select domains you care about";
+        }
+        if (intClearBtn) {
+            intClearBtn.style.display = mine.interests.length > 0 ? "inline-block" : "none";
+        }
+        if (intDrop) {
+            intDrop.classList.toggle("has-selection", mine.interests.length > 0);
+        }
+        if (intPrevEl) {
+            if (mine.interests.length > 0) {
+                intPrevEl.style.display = "flex";
+                intPrevEl.innerHTML = mine.interests.map((id) => 
+                    '<span class="filter-preview-pill">' + esc(labelOf("interests", id)) +
+                    ' <button class="filter-preview-pill__remove" type="button" data-remove-tag="interests" data-tag-id="' + esc(id) + '" aria-label="Remove ' + esc(labelOf("interests", id)) + '">&times;</button></span>'
+                ).join("");
+            } else {
+                intPrevEl.style.display = "none";
+                intPrevEl.innerHTML = "";
+            }
+        }
+
+        // Update Skills Dropdown
+        const sklCountEl = document.querySelector('[data-dropdown-count="skills"]');
+        const sklSubEl = document.querySelector('[data-dropdown-subtitle="skills"]');
+        const sklClearBtn = document.querySelector('[data-clear-tags="skills"]');
+        const sklPrevEl = document.querySelector('[data-dropdown-preview="skills"]');
+        const sklDrop = document.getElementById("dropdown-skills");
+
+        if (sklCountEl) {
+            if (mine.skills.length > 0) {
+                sklCountEl.style.display = "inline-block";
+                sklCountEl.textContent = mine.skills.length + (mine.skills.length === 1 ? " skill" : " skills");
+            } else {
+                sklCountEl.style.display = "none";
+            }
+        }
+        if (sklSubEl) {
+            sklSubEl.textContent = mine.skills.length > 0
+                ? mine.skills.length + " skill" + (mine.skills.length === 1 ? "" : "s") + " selected • Click to adjust"
+                : "Filter by your strengths";
+        }
+        if (sklClearBtn) {
+            sklClearBtn.style.display = mine.skills.length > 0 ? "inline-block" : "none";
+        }
+        if (sklDrop) {
+            sklDrop.classList.toggle("has-selection", mine.skills.length > 0);
+        }
+        if (sklPrevEl) {
+            if (mine.skills.length > 0) {
+                sklPrevEl.style.display = "flex";
+                sklPrevEl.innerHTML = mine.skills.map((id) => 
+                    '<span class="filter-preview-pill">' + esc(labelOf("skills", id)) +
+                    ' <button class="filter-preview-pill__remove" type="button" data-remove-tag="skills" data-tag-id="' + esc(id) + '" aria-label="Remove ' + esc(labelOf("skills", id)) + '">&times;</button></span>'
+                ).join("");
+            } else {
+                sklPrevEl.style.display = "none";
+                sklPrevEl.innerHTML = "";
+            }
+        }
+
+        // Update Reset All button
+        const resetAllBtn = document.getElementById("people-reset-all");
+        if (resetAllBtn) {
+            resetAllBtn.style.display = (mine.interests.length > 0 || mine.skills.length > 0) ? "inline-flex" : "none";
+        }
     };
 
     const chip = (kind, id, text) =>
@@ -1139,6 +1226,7 @@ function initCommunityFollow() {
         else mine[kind].push(id);
 
         writeStore(PROFILE_KEY, mine);
+        updateDropdownUI();
         load().catch(showPeopleError);
     };
 
@@ -1266,6 +1354,53 @@ function initCommunityFollow() {
     if (filter) {
         filter.addEventListener("input", () => renderChips());
     }
+
+    // Dropdown accordion toggles
+    document.querySelectorAll("[data-dropdown-trigger]").forEach((trigger) => {
+        trigger.addEventListener("click", () => {
+            const dropdown = trigger.closest(".filter-dropdown");
+            if (!dropdown) return;
+            const isOpen = dropdown.classList.toggle("is-open");
+            trigger.setAttribute("aria-expanded", String(isOpen));
+            if (isOpen && dropdown.dataset.dropdown === "skills" && filter) {
+                setTimeout(() => filter.focus(), 150);
+            }
+        });
+    });
+
+    // Preview tag removal and clear buttons
+    document.addEventListener("click", (e) => {
+        const removeBtn = e.target.closest("[data-remove-tag]");
+        if (removeBtn) {
+            e.stopPropagation();
+            toggleTag(removeBtn.dataset.removeTag, removeBtn.dataset.tagId);
+            return;
+        }
+
+        const clearBtn = e.target.closest("[data-clear-tags]");
+        if (clearBtn) {
+            e.stopPropagation();
+            const kind = clearBtn.dataset.clearTags;
+            if (kind && Array.isArray(mine[kind])) {
+                mine[kind] = [];
+                writeStore(PROFILE_KEY, mine);
+                updateDropdownUI();
+                load().catch(showPeopleError);
+            }
+            return;
+        }
+
+        const resetAll = e.target.closest("#people-reset-all");
+        if (resetAll) {
+            e.stopPropagation();
+            mine.interests = [];
+            mine.skills = [];
+            writeStore(PROFILE_KEY, mine);
+            updateDropdownUI();
+            load().catch(showPeopleError);
+            return;
+        }
+    });
 
     window.addEventListener("future-era:session", () => {
         if (slide.querySelector(".person-card")) load().catch(showPeopleError);
