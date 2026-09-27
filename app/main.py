@@ -9,10 +9,16 @@ Serves the merged frontend as static files from one process on one port.
 """
 
 import os
+import sys
 import hashlib
 import json
 from functools import lru_cache
 from pathlib import Path
+
+# Ensure project root is in sys.path so running directly via `python app/main.py` works seamlessly
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -465,3 +471,19 @@ async def suggest_professions_endpoint(request: SuggestProfessionsRequest):
             status_code=500,
             detail=f"AI API is currently unavailable and no suggestions found in the database. (Error: {str(ai_err)})"
         )
+
+
+if __name__ == "__main__":
+    import uvicorn
+    from app.config import HOST, PORT
+
+    if sys.stdout.encoding and sys.stdout.encoding.lower() != "utf-8":
+        try:
+            sys.stdout.reconfigure(encoding="utf-8")
+        except Exception:
+            pass
+
+    print(f"Starting FutureEra on http://{HOST}:{PORT}")
+    print(f"Swagger API Docs available at http://{HOST}:{PORT}/docs")
+    uvicorn.run("app.main:app", host=HOST, port=PORT, reload=True)
+
