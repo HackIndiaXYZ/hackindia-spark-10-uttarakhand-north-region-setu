@@ -55,6 +55,7 @@ function initIntro() {
 
   const els = {
     eyebrow: document.querySelector(".intro__eyebrow"),
+    rule: document.querySelector(".intro__rule span"),
     glowWrap: document.querySelector(".intro__glow-wrap"),
     glow: document.querySelector(".intro__glow"),
     glow2: document.querySelector(".intro__glow-secondary"),
@@ -65,14 +66,15 @@ function initIntro() {
 
   if (reduceMotion) {
     gsap.set(
-      pick([els.eyebrow, els.actions, titleWords, els.subtitle, els.tags, els.glow, els.glow2]),
-      { opacity: 1, y: 0, x: 0, scale: 1, yPercent: 0 }
+      pick([els.eyebrow, els.rule, els.actions, titleWords, els.subtitle, els.tags, els.glow, els.glow2]),
+      { opacity: 1, y: 0, x: 0, scale: 1, yPercent: 0, scaleX: 1 }
     );
     return;
   }
 
   // Set initial hidden states
   if (els.eyebrow) gsap.set(els.eyebrow, { opacity: 0, y: -22, scale: 0.92 });
+  if (els.rule) gsap.set(els.rule, { scaleX: 0 });
   gsap.set(pick([titleWords]), { yPercent: 120, opacity: 0 });
   gsap.set(pick([els.subtitle]), { opacity: 0, y: 22 });
   gsap.set(pick([els.tags]), { opacity: 0, y: 16, scale: 0.9 });
@@ -89,6 +91,15 @@ function initIntro() {
     ease: "power2.out",
     stagger: 0.2,
   }, 0);
+
+  // 1.5. Intro Rule Line Sweep
+  if (els.rule) {
+    tl.to(els.rule, {
+      scaleX: 1,
+      duration: 1.4,
+      ease: "power3.inOut",
+    }, 0.15);
+  }
 
   // 2. Eyebrow Badge Pop (if present)
   if (els.eyebrow) {
