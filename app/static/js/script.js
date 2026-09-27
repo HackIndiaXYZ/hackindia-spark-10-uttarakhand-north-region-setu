@@ -491,21 +491,204 @@ function initAuth() {
     renderWho();
 }
 
+let ALL_PEOPLE_CACHE = [];
+
+/* =========================================================
+   STUDENT / PEER DETAIL MODAL CONTROLLER
+   ========================================================= */
+
+function openPersonDetail(id, fallbackList) {
+    const dialog = document.getElementById("person-detail-dialog");
+    if (!dialog) return;
+
+    const list = ALL_PEOPLE_CACHE.length ? ALL_PEOPLE_CACHE : (fallbackList || []);
+    const person = list.find((p) => p.id === id) || (RANKED && (RANKED.people || []).find((p) => p.id === id));
+    if (!person) return;
+
+    const session = readStore(AUTH_SESSION, {}) || {};
+    const followList = session.email ? readStore(FOLLOWS_KEY + session.email, []) : [];
+    const isFollowed = followList.indexOf(id) > -1;
+
+    const nameEl = document.getElementById("person-detail-name");
+    const handleEl = document.getElementById("person-detail-handle");
+    const avatarEl = document.getElementById("person-detail-avatar");
+    const roleEl = document.getElementById("person-detail-role");
+    const scoreEl = document.getElementById("person-detail-score");
+    const eduEl = document.getElementById("person-detail-edu");
+    const statusEl = document.getElementById("person-detail-status");
+    const blurbEl = document.getElementById("person-detail-blurb");
+    const skillsEl = document.getElementById("person-detail-skills");
+    const interestsEl = document.getElementById("person-detail-interests");
+    const groupsEl = document.getElementById("person-detail-groups");
+    const followersEl = document.getElementById("person-detail-followers");
+    const followBtn = document.getElementById("person-detail-follow-btn");
+
+    if (nameEl) nameEl.textContent = person.name;
+    if (handleEl) handleEl.textContent = person.handle || "";
+    if (avatarEl) avatarEl.textContent = (person.name || "FE").charAt(0).toUpperCase();
+    if (roleEl) roleEl.textContent = person.roleLabel || person.role || "Member";
+
+    const match = person.match || {};
+    const scored = match.score !== null && match.score !== undefined;
+    if (scoreEl) {
+        if (scored) {
+            scoreEl.textContent = match.score + "% Match with you";
+            scoreEl.style.display = "inline-block";
+        } else {
+            scoreEl.style.display = "none";
+        }
+    }
+
+    if (eduEl) {
+        eduEl.textContent = "🎓 " + (person.institution || "Engineering University") + (person.stage ? " • " + person.stage : "");
+    }
+
+    if (statusEl) {
+        statusEl.textContent = person.status || "Collaborating in FutureEra Community & shipping projects.";
+    }
+
+    if (blurbEl) {
+        blurbEl.textContent = person.blurb || "No bio added yet.";
+    }
+
+    const myProfile = readStore(PROFILE_KEY, {}) || {};
+    const myInterests = new Set(myProfile.interests || []);
+    const mySkills = new Set(myProfile.skills || []);
+
+    if (skillsEl) {
+        skillsEl.innerHTML = (person.skills || []).map((s) => {
+            const isShared = mySkills.has(s);
+            return '<span class="person-dialog__chip' + (isShared ? ' is-shared' : '') + '">' + esc(s) + (isShared ? ' ★' : '') + '</span>';
+        }).join("") || '<span class="prof__empty">No skills listed.</span>';
+    }
+
+    if (interestsEl) {
+        interestsEl.innerHTML = (person.interests || []).map((i) => {
+            const isShared = myInterests.has(i);
+            return '<span class="person-dialog__chip' + (isShared ? ' is-shared' : '') + '">' + esc(i) + (isShared ? ' ★' : '') + '</span>';
+        }).join("") || '<span class="prof__empty">No interests listed.</span>';
+    }
+
+    if (groupsEl) {
+        groupsEl.innerHTML = (person.groups || []).map((g) => {
+            return '<span class="person-dialog__group-badge">' + esc(g) + '</span>';
+        }).join("") || '<span class="prof__empty">Not in any groups yet.</span>';
+    }
+
+    if (followersEl) followersEl.textContent = person.followers || 0;
+
+    if (followBtn) {
+        followBtn.dataset.detailFollow = person.id;
+        followBtn.classList.toggle("is-following", isFollowed);
+        followBtn.textContent = isFollowed ? "✓ Following" : "+ Follow";
+    }
+
+    if (typeof dialog.showModal === "function") {
+        if (!dialog.open) dialog.showModal();
+    } else {
+        dialog.setAttribute("open", "");
+    }
+}
+
+function initPersonDetailDialog() {
+    const dialog = document.getElementById("person-detail-dialog");
+    if (!dialog) return;
+
+    const closeBtn = dialog.querySelector("[data-person-dialog-close]");
+    const close = () => {
+        if (dialog.open && typeof dialog.close === "function") dialog.close();
+        else dialog.removeAttribute("open");
+    };
+
+    if (closeBtn) closeBtn.addEventListener("click", close);
+    dialog.addEventListener("click", (e) => {
+        if (e.target === dialog) close();
+    });
+
+    const detailFollowBtn = document.getElementById("person-detail-follow-btn");
+    if (detailFollowBtn) {
+        detailFollowBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            const id = detailFollowBtn.dataset.detailFollow;
+            if (id) flipFollow(id);
+        });
+    }
+}
+
+function flipFollow(id) {
+    const session = readStore(AUTH_SESSION, {}) || {};
+    if (!session.email) {
+        window.dispatchEvent(new CustomEvent("future-era:open-auth"));
+        return false;
+    }
+
+    const key = FOLLOWS_KEY + session.email;
+    const list = readStore(key, []);
+    const at = list.indexOf(id);
+    const nowFollowing = at === -1;
+
+    if (nowFollowing) list.push(id);
+    else list.splice(at, 1);
+
+    writeStore(key, list);
+
+    // Update ALL follow buttons with this id across the DOM
+    document.querySelectorAll('[data-follow="' + id + '"], [data-detail-follow="' + id + '"], [data-unfollow="' + id + '"]').forEach((btn) => {
+        btn.classList.toggle("is-following", nowFollowing);
+        btn.setAttribute("aria-pressed", String(nowFollowing));
+        if (btn.hasAttribute("data-unfollow")) {
+            btn.textContent = nowFollowing ? "Following" : "+ Follow";
+        } else {
+            btn.textContent = nowFollowing ? "✓ Following" : "+ Follow";
+        }
+    });
+
+    // Update follower count in card and detail dialog if present
+    document.querySelectorAll('[data-followers-count="' + id + '"]').forEach((el) => {
+        let count = parseInt(el.textContent, 10) || 0;
+        count = nowFollowing ? count + 1 : Math.max(0, count - 1);
+        el.textContent = count;
+    });
+
+    const dialogFollowersEl = document.getElementById("person-detail-followers");
+    const detailBtn = document.getElementById("person-detail-follow-btn");
+    if (detailBtn && detailBtn.dataset.detailFollow === id && dialogFollowersEl) {
+        let count = parseInt(dialogFollowersEl.textContent, 10) || 0;
+        count = nowFollowing ? count + 1 : Math.max(0, count - 1);
+        dialogFollowersEl.textContent = count;
+    }
+
+    // Dispatch event to re-render profile stats & list
+    window.dispatchEvent(new CustomEvent("future-era:follows-changed", { detail: { id, nowFollowing } }));
+    return true;
+}
+
 /* =========================================================
    PROFILE POPUP CONTROLLER
    ========================================================= */
 
 function initProfile() {
     const dialog = document.getElementById("profile-dialog");
-    const openBtns = Array.from(document.querySelectorAll("[data-profile-open]"));
+    const openBtns = Array.from(document.querySelectorAll("[data-profile-open], .auth__who .auth__avatar"));
     if (!dialog || !openBtns.length) return;
 
     const el = {};
-    ["initial", "email", "following-count", "followers-count", "group-count", "group-hint",
-        "tags", "tags-empty", "following", "following-empty",
-        "groups", "groups-empty", "group-choices"].forEach((key) => {
+    ["initial", "email", "headline", "edu", "following-count", "followers-count", "group-count", "tag-count", "group-hint",
+        "tags", "tags-empty", "groups", "groups-empty", "group-choices"].forEach((key) => {
         el[key] = dialog.querySelector("[data-profile-" + key + "]");
     });
+    const followingListEl = dialog.querySelector("[data-profile-following-list]");
+    const followingEmptyEl = dialog.querySelector("[data-profile-following-empty]");
+    const followersListEl = dialog.querySelector("[data-profile-followers-list]");
+    const followersEmptyEl = dialog.querySelector("[data-profile-followers-empty]");
+
+    const editBtn = dialog.querySelector("[data-profile-edit-toggle]");
+    const editCancelBtn = dialog.querySelector("[data-profile-edit-cancel]");
+    const editForm = document.getElementById("prof-edit-form");
+
+    const statTabs = Array.from(dialog.querySelectorAll("[data-prof-tab]"));
+    const panels = Array.from(dialog.querySelectorAll(".prof__panel"));
+
     const closeBtn = dialog.querySelector("[data-profile-close]");
     const chipName = document.querySelector("[data-profile-chipname]");
 
@@ -539,6 +722,7 @@ function initProfile() {
 
                 members = {};
                 (p.people || []).forEach((m) => { members[m.id] = m; });
+                ALL_PEOPLE_CACHE = p.people || [];
 
                 label.interests = {};
                 (p.interests || []).forEach((row) => { label.interests[row.id] = row.label; });
@@ -553,6 +737,86 @@ function initProfile() {
 
     const groupLabel = (id) => label.groups[id] || id;
 
+    const switchTab = (tabName) => {
+        statTabs.forEach((tab) => {
+            const isActive = tab.dataset.profTab === tabName;
+            tab.classList.toggle("is-active", isActive);
+            tab.setAttribute("aria-selected", String(isActive));
+        });
+        panels.forEach((p) => {
+            p.classList.toggle("is-active", p.id === "view-" + tabName);
+        });
+    };
+
+    statTabs.forEach((tab) => {
+        tab.addEventListener("click", () => switchTab(tab.dataset.profTab));
+    });
+
+    if (editBtn) {
+        editBtn.addEventListener("click", () => {
+            if (!editForm) return;
+            const isHidden = editForm.style.display === "none";
+            editForm.style.display = isHidden ? "block" : "none";
+            if (isHidden) {
+                const s = session();
+                const me = record();
+                const nameInp = editForm.querySelector("#prof-edit-name");
+                const headInp = editForm.querySelector("#prof-edit-headline");
+                const instInp = editForm.querySelector("#prof-edit-institution");
+                const stageInp = editForm.querySelector("#prof-edit-stage");
+                const bioInp = editForm.querySelector("#prof-edit-bio");
+
+                if (nameInp) nameInp.value = me.name || s.name || "";
+                if (headInp) headInp.value = me.headline || "Full-Stack Developer & AI Explorer";
+                if (instInp) instInp.value = me.institution || "";
+                if (stageInp) stageInp.value = me.stage || "Final-Year College Student";
+                if (bioInp) bioInp.value = me.bio || "";
+            }
+        });
+    }
+
+    if (editCancelBtn) {
+        editCancelBtn.addEventListener("click", () => {
+            if (editForm) editForm.style.display = "none";
+        });
+    }
+
+    if (editForm) {
+        editForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+            const s = session();
+            if (!s.email) return;
+
+            const users = readStore(AUTH_USERS, {}) || {};
+            const me = users[s.email] || { name: s.name, email: s.email };
+
+            const nameInp = editForm.querySelector("#prof-edit-name");
+            const headInp = editForm.querySelector("#prof-edit-headline");
+            const instInp = editForm.querySelector("#prof-edit-institution");
+            const stageInp = editForm.querySelector("#prof-edit-stage");
+            const bioInp = editForm.querySelector("#prof-edit-bio");
+
+            me.name = nameInp ? String(nameInp.value || "").trim() || me.name : me.name;
+            me.headline = headInp ? String(headInp.value || "").trim() : "";
+            me.institution = instInp ? String(instInp.value || "").trim() : "";
+            me.stage = stageInp ? String(stageInp.value || "").trim() : "";
+            me.bio = bioInp ? String(bioInp.value || "").trim() : "";
+
+            users[s.email] = me;
+            writeStore(AUTH_USERS, users);
+
+            s.name = me.name;
+            writeStore(AUTH_SESSION, s);
+
+            editForm.style.display = "none";
+            paint();
+
+            const whoBadge = document.querySelector("[data-auth-initial]");
+            if (whoBadge) whoBadge.textContent = me.name.charAt(0).toUpperCase();
+            if (chipName) chipName.textContent = me.name;
+        });
+    }
+
     const paintTags = () => {
         if (!el.tags) return;
         const picks = readStore(PROFILE_KEY, {}) || {};
@@ -562,6 +826,8 @@ function initProfile() {
             .concat(asList(picks.skills).map((id) => ({
                 text: label.skills[id] || id, kind: "Skill",
             })));
+
+        if (el["tag-count"]) el["tag-count"].textContent = rows.length;
 
         el.tags.innerHTML = rows.map((row) =>
             '<li' + (row.kind === "Skill" ? ' class="is-skill"' : "") +
@@ -573,15 +839,54 @@ function initProfile() {
     const paintFollowing = () => {
         const ids = followIds();
         if (el["following-count"]) el["following-count"].textContent = ids.length;
-        if (el.following) {
-            el.following.innerHTML = ids.map((id) => {
-                const m = members[id];
-                return "<li><b>" + esc(m ? m.name : id) + "</b>" +
-                    '<span class="prof__listsub">' +
-                    esc(m ? m.handle || "" : "") + "</span></li>";
-            }).join("");
+
+        if (followingListEl) {
+            if (!ids.length) {
+                followingListEl.innerHTML = "";
+                if (followingEmptyEl) followingEmptyEl.hidden = false;
+            } else {
+                if (followingEmptyEl) followingEmptyEl.hidden = true;
+                followingListEl.innerHTML = ids.map((id) => {
+                    const m = members[id] || { name: id, handle: "@" + id, roleLabel: "Member", institution: "Community" };
+                    return (
+                        '<li class="prof__member-row" data-open-member="' + esc(id) + '">' +
+                        '<div class="prof__member-left">' +
+                        '<span class="prof__member-avatar">' + esc((m.name || id).charAt(0).toUpperCase()) + "</span>" +
+                        '<div class="prof__member-info">' +
+                        '<h4 class="prof__member-name">' + esc(m.name) + ' <span class="prof__member-handle">' + esc(m.handle || "") + "</span></h4>" +
+                        '<p class="prof__member-sub">🎓 ' + esc(m.institution || "University") + (m.roleLabel || m.role ? " • " + esc(m.roleLabel || m.role) : "") + "</p>" +
+                        "</div>" +
+                        "</div>" +
+                        '<button class="follow-btn is-following" type="button" data-unfollow="' + esc(id) + '" title="Click to unfollow">Following</button>' +
+                        "</li>"
+                    );
+                }).join("");
+            }
         }
-        if (el["following-empty"]) el["following-empty"].hidden = ids.length > 0;
+    };
+
+    const paintFollowers = () => {
+        if (el["followers-count"]) el["followers-count"].textContent = "3";
+        if (followersListEl) {
+            const sampleFollowers = [
+                { id: "himanshu-bisht", name: "Himanshu Bisht", handle: "@himanshu", role: "Data Analyst", institution: "DTU Delhi" },
+                { id: "aman-chauhan", name: "Aman Chauhan", handle: "@amanch", role: "Frontend Engineer", institution: "IIT Roorkee" },
+                { id: "priya-nair", name: "Priya Nair", handle: "@priyanair", role: "ML Engineer", institution: "IIIT Hyderabad" }
+            ];
+            followersListEl.innerHTML = sampleFollowers.map((m) =>
+                '<li class="prof__member-row" data-open-member="' + esc(m.id) + '">' +
+                '<div class="prof__member-left">' +
+                '<span class="prof__member-avatar">' + esc(m.name.charAt(0).toUpperCase()) + "</span>" +
+                '<div class="prof__member-info">' +
+                '<h4 class="prof__member-name">' + esc(m.name) + ' <span class="prof__member-handle">' + esc(m.handle) + "</span></h4>" +
+                '<p class="prof__member-sub">🎓 ' + esc(m.institution) + " • " + esc(m.role) + "</p>" +
+                "</div>" +
+                "</div>" +
+                '<button class="follow-btn" type="button" data-follow="' + esc(m.id) + '">+ Follow</button>' +
+                "</li>"
+            ).join("");
+            if (followersEmptyEl) followersEmptyEl.hidden = true;
+        }
     };
 
     const paintGroups = () => {
@@ -615,10 +920,21 @@ function initProfile() {
         if (el.initial) el.initial.textContent = seed.charAt(0).toUpperCase();
         if (el.email) el.email.textContent = email;
         if (chipName) chipName.textContent = name || email || "Profile";
-        if (el["followers-count"]) el["followers-count"].textContent = "0";
+
+        if (el.headline) {
+            el.headline.textContent = me.headline || "Builder • Master of AI Era";
+        }
+
+        if (el.edu) {
+            const bits = [];
+            if (me.institution) bits.push("🎓 " + me.institution);
+            if (me.stage) bits.push(me.stage);
+            el.edu.textContent = bits.join(" • ");
+        }
 
         paintTags();
         paintFollowing();
+        paintFollowers();
         paintGroups();
     };
 
@@ -639,10 +955,16 @@ function initProfile() {
     };
 
     const open = () => {
-        if (!session().email) return;
+        const s = session();
+        if (!s.email) {
+            window.dispatchEvent(new CustomEvent("future-era:open-auth"));
+            return;
+        }
 
         if (typeof dialog.showModal === "function") {
             if (!dialog.open) dialog.showModal();
+        } else {
+            dialog.setAttribute("open", "");
         }
 
         paint();
@@ -659,6 +981,22 @@ function initProfile() {
     openBtns.forEach((btn) => btn.addEventListener("click", open));
     if (closeBtn) closeBtn.addEventListener("click", close);
     dialog.addEventListener("click", (e) => { if (e.target === dialog) close(); });
+
+    // Handle clicks inside following & followers lists in profile
+    dialog.addEventListener("click", (e) => {
+        const unfollowBtn = e.target.closest("[data-unfollow]");
+        if (unfollowBtn) {
+            e.stopPropagation();
+            flipFollow(unfollowBtn.dataset.unfollow);
+            paintFollowing();
+            return;
+        }
+
+        const memberRow = e.target.closest("[data-open-member]");
+        if (memberRow && !e.target.closest(".follow-btn")) {
+            openPersonDetail(memberRow.dataset.openMember, Object.values(members));
+        }
+    });
 
     if (el["group-choices"]) {
         el["group-choices"].addEventListener("change", (e) => {
@@ -678,6 +1016,10 @@ function initProfile() {
     window.addEventListener("future-era:session", () => {
         if (!session().email) close();
         else paint();
+    });
+
+    window.addEventListener("future-era:follows-changed", () => {
+        paintFollowing();
     });
 }
 
@@ -811,32 +1153,33 @@ function initCommunityFollow() {
             .map((id) => '<span class="tag' + (mineSet.has(id) ? ' tag--shared' : '') + '">' + esc(labelOf("skills", id)) + '</span>')
             .join("");
 
-        const why = scored
-            ? (shared.length
-                ? "Shares " + (match.interests || []).length + " interests and " + (match.skills || []).length + " skills with you"
-                : "Different tech stack, same trajectory")
-            : "Pick tags above to compute live match score";
+        const eduText = (person.institution || "Engineering University") + (person.stage ? " • " + person.stage : "");
 
         return (
-            '<article class="person' + (isFollowed ? " is-following" : "") + '" role="listitem" data-person="' + esc(person.id) + '">' +
-            '<div class="person__top">' +
-            '<span class="person__avatar" aria-hidden="true">' + esc(person.name.charAt(0).toUpperCase()) + "</span>" +
-            '<span class="person__id">' +
-            '<h3 class="person__name">' + esc(person.name) + "</h3>" +
-            '<span class="person__handle">' + esc(person.handle || "") + "</span>" +
-            "</span>" +
+            '<article class="person-card' + (isFollowed ? " is-following" : "") + '" role="listitem" data-open-person="' + esc(person.id) + '">' +
+            '<div class="person-card__head">' +
+            '<span class="person-card__avatar" aria-hidden="true">' + esc(person.name.charAt(0).toUpperCase()) + "</span>" +
+            '<div style="min-width: 0; flex: 1;">' +
+            '<h3 class="person-card__name">' + esc(person.name) + "</h3>" +
+            '<span class="person-card__handle">' + esc(person.handle || "") + "</span>" +
             "</div>" +
-            '<span class="person__role">' + esc(person.roleLabel || person.role || "") + "</span>" +
-            '<p class="person__blurb">' + esc(person.blurb || "") + "</p>" +
-            (tags ? '<div class="person__tags">' + tags + "</div>" : "") +
-            '<p class="person__why">' + esc(why) + "</p>" +
-            '<div class="person__foot">' +
-            '<span class="person__score">' + (scored ? "<b>" + esc(match.score) + "%</b> match" : "not ranked") + "</span>" +
-            '<button class="follow' + (isFollowed ? " is-following" : "") + '" type="button" data-follow="' + esc(person.id) + '" aria-pressed="' + (isFollowed ? "true" : "false") + '">' +
-            (isFollowed ? "Following" : "Follow") +
+            "</div>" +
+            '<p class="person-card__edu" title="' + esc(eduText) + '">🎓 ' + esc(eduText) + '</p>' +
+            '<div class="person-card__meta">' +
+            '<span class="person-card__role">' + esc(person.roleLabel || person.role || "") + "</span>" +
+            (scored ? '<span class="person-card__score">' + esc(match.score) + '% Match</span>' : '<span class="person-card__score" style="background:#f1f5f9; color:#64748b; border-color:#e2e8f0;">Community</span>') +
+            "</div>" +
+            '<p class="person-card__blurb">' + esc(person.blurb || "") + "</p>" +
+            (tags ? '<div class="person-card__tags">' + tags + "</div>" : "") +
+            '<div class="person-card__foot">' +
+            '<div style="display:flex; flex-direction:column;">' +
+            '<span class="person-card__followers"><b data-followers-count="' + esc(person.id) + '">' + esc(person.followers || 0) + '</b> followers</span>' +
+            '<span class="person-card__click-hint">View profile &rarr;</span>' +
+            '</div>' +
+            '<button class="follow-btn' + (isFollowed ? " is-following" : "") + '" type="button" data-follow="' + esc(person.id) + '" aria-pressed="' + (isFollowed ? "true" : "false") + '">' +
+            (isFollowed ? "✓ Following" : "+ Follow") +
             "</button>" +
             "</div>" +
-            '<span class="person__followers">' + esc(person.followers || 0) + " followers</span>" +
             "</article>"
         );
     };
@@ -888,7 +1231,7 @@ function initCommunityFollow() {
     const next = document.querySelector("[data-people-next]");
 
     const nudge = (dir) => {
-        const cardEl = slide.querySelector(".person");
+        const cardEl = slide.querySelector(".person-card");
         const width = cardEl ? cardEl.getBoundingClientRect().width + 20 : 300;
         slide.scrollBy({ left: dir * width * 1.5, behavior: "smooth" });
     };
@@ -907,8 +1250,17 @@ function initCommunityFollow() {
     });
 
     slide.addEventListener("click", (e) => {
-        const btn = e.target.closest("[data-follow]");
-        if (btn) flipFollow(btn.dataset.follow, btn);
+        const followBtn = e.target.closest("[data-follow]");
+        if (followBtn) {
+            e.stopPropagation();
+            flipFollow(followBtn.dataset.follow);
+            return;
+        }
+
+        const personCard = e.target.closest("[data-open-person]");
+        if (personCard) {
+            openPersonDetail(personCard.dataset.openPerson, ALL_PEOPLE_CACHE);
+        }
     });
 
     if (filter) {
@@ -916,7 +1268,7 @@ function initCommunityFollow() {
     }
 
     window.addEventListener("future-era:session", () => {
-        if (slide.querySelector(".person")) load().catch(showPeopleError);
+        if (slide.querySelector(".person-card")) load().catch(showPeopleError);
     });
 
     load().catch(showPeopleError);
@@ -1026,6 +1378,7 @@ function init() {
     initAuth();
     initProfile();
     initCommunity();
+    initPersonDetailDialog();
     initCommunityFollow();
     initCommunityGroups();
 }

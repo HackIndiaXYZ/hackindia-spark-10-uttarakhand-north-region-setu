@@ -27,7 +27,11 @@
       "name": "Himanshu Bisht",
       "handle": "@himanshu",
       "role": "dataanalyst",
+      "institution": "Delhi Technological University (DTU)",
+      "stage": "Final Year • B.Tech Data Analytics",
+      "status": "Benchmarking SQLite vs PostgreSQL caching pipelines for 2026 data workflows",
       "blurb": "Six months into a data career and posting the spreadsheet mistakes that cost me a week, so you do not pay for them too.",
+      "location": "New Delhi, India",
       "interests": [
         "data",
         "coding"
@@ -50,7 +54,11 @@
       "name": "Dev Sharma",
       "handle": "@devsharma",
       "role": "fullstack",
+      "institution": "Netaji Subhas University of Technology (NSUT)",
+      "stage": "Final Year • B.Tech Computer Science",
+      "status": "Building reactive full-stack web platforms and zero-latency local database vaults",
       "blurb": "Building small tools end to end. Currently one very opinionated habit tracker with a login page that took three weeks.",
+      "location": "New Delhi, India",
       "interests": [
         "coding",
         "product"
@@ -62,18 +70,22 @@
         "restapi",
         "git"
       ],
-      "followers": 388,
       "groups": [
         "builders",
         "product-clinic"
-      ]
+      ],
+      "followers": 388
     },
     {
       "id": "aman-chauhan",
       "name": "Aman Chauhan",
       "handle": "@amanch",
       "role": "frontend",
+      "institution": "IIT Roorkee",
+      "stage": "3rd Year • B.Tech Computer Science",
+      "status": "Crafting ultra-fluid GSAP micro-animations & accessible design tokens",
       "blurb": "I care about what a page feels like on the cheapest phone someone actually owns. Motion budget goes to the interaction, not the entrance.",
+      "location": "Roorkee, India",
       "interests": [
         "design",
         "coding"
@@ -84,19 +96,23 @@
         "javascript",
         "react"
       ],
-      "followers": 502,
       "groups": [
         "builders",
         "design-table",
         "front-end"
-      ]
+      ],
+      "followers": 502
     },
     {
       "id": "harshit-chaurasiya",
       "name": "Harshit Chaurasiya",
       "handle": "@harshitc",
       "role": "productmanager",
+      "institution": "BITS Pilani",
+      "stage": "Final Year • Dual Degree CS & Economics",
+      "status": "Validating multi-year engineering roadmap architectures with student cohorts",
       "blurb": "Shipped a career path tool that reads like a conversation. First version is up and I would genuinely like it torn apart.",
+      "location": "Pilani, India",
       "interests": [
         "product",
         "coding"
@@ -107,18 +123,22 @@
         "agile",
         "analytics"
       ],
-      "followers": 176,
       "groups": [
         "builders",
         "product-clinic"
-      ]
+      ],
+      "followers": 176
     },
     {
       "id": "priya-nair",
       "name": "Priya Nair",
       "handle": "@priyanair",
       "role": "mlengineer",
+      "institution": "IIIT Hyderabad",
+      "stage": "Final Year • M.Tech Artificial Intelligence",
+      "status": "Training localized fine-tunes & eval benchmarks for code generation",
       "blurb": "ML engineer. The boring 80 percent is data plumbing and evaluation, and I write about that part more than the notebooks.",
+      "location": "Hyderabad, India",
       "interests": [
         "ai",
         "data"
@@ -130,17 +150,21 @@
         "sql",
         "stats"
       ],
-      "followers": 731,
       "groups": [
         "data-circle"
-      ]
+      ],
+      "followers": 731
     },
     {
       "id": "rohit-verma",
       "name": "Rohit Verma",
       "handle": "@rohitv",
       "role": "devops",
+      "institution": "NIT Trichy",
+      "stage": "Final Year • B.Tech CSE",
+      "status": "Writing automated container CI/CD pipelines and self-healing deployment scripts",
       "blurb": "Deployments, pipelines and the on-call week nobody warns you about. If it only works on my laptop, I want to hear about it.",
+      "location": "Bengaluru, India",
       "interests": [
         "cloud",
         "coding"
@@ -152,17 +176,21 @@
         "ci",
         "linux"
       ],
-      "followers": 445,
       "groups": [
         "builders"
-      ]
+      ],
+      "followers": 445
     },
     {
       "id": "sneha-iyer",
       "name": "Sneha Iyer",
       "handle": "@snehai",
       "role": "uiux",
+      "institution": "National Institute of Design (NID)",
+      "stage": "Final Year • Interaction & Digital Product Design",
+      "status": "Designing high-contrast dark/light mode interfaces with sub-pixel typography",
       "blurb": "Designing for people who are already tired. My case studies are mostly about what I removed, which is apparently the whole job.",
+      "location": "Ahmedabad, India",
       "interests": [
         "design",
         "product"
@@ -174,18 +202,22 @@
         "css",
         "communication"
       ],
-      "followers": 358,
       "groups": [
         "design-table",
         "product-clinic"
-      ]
+      ],
+      "followers": 358
     },
     {
       "id": "arjun-mehta",
       "name": "Arjun Mehta",
       "handle": "@arjunm",
       "role": "cybersecurity",
+      "institution": "University of Delhi (CIC)",
+      "stage": "3rd Year • B.Tech IT & Mathematical Innovations",
+      "status": "Building automated network traffic anomaly detectors with Python and eBPF",
       "blurb": "Security analyst. I explain the log line that told you what was wrong three days before it mattered.",
+      "location": "New Delhi, India",
       "interests": [
         "security",
         "data"
@@ -197,17 +229,21 @@
         "networking",
         "testing"
       ],
-      "followers": 289,
       "groups": [
         "data-circle"
-      ]
+      ],
+      "followers": 289
     },
     {
       "id": "kavya-reddy",
       "name": "Kavya Reddy",
       "handle": "@kavyareddy",
       "role": "mobile",
+      "institution": "VIT Vellore",
+      "stage": "Final Year • B.Tech Software Engineering",
+      "status": "Building offline-first mobile apps with local SQLite sync and gesture navigation",
       "blurb": "Android and iOS. Shipping one app at a time and writing down what each store review taught me.",
+      "location": "Chennai, India",
       "interests": [
         "mobile",
         "coding"
@@ -219,18 +255,22 @@
         "git",
         "testing"
       ],
-      "followers": 267,
       "groups": [
         "builders",
         "front-end"
-      ]
+      ],
+      "followers": 267
     },
     {
       "id": "devansh-gupta",
       "name": "Devansh Gupta",
       "handle": "@devanshg",
       "role": "marketing",
+      "institution": "Manipal Institute of Technology",
+      "stage": "Final Year • B.Tech & Product Growth",
+      "status": "Analyzing viral distribution channels for student-led developer tools",
       "blurb": "Growth and content. Half my job is finding out which idea nobody wanted, quickly, before a quarter is spent on it.",
+      "location": "Manipal, India",
       "interests": [
         "marketing",
         "product"
@@ -242,17 +282,21 @@
         "ads",
         "analytics"
       ],
-      "followers": 312,
       "groups": [
         "product-clinic"
-      ]
+      ],
+      "followers": 312
     },
     {
       "id": "fatima-khan",
       "name": "Fatima Khan",
       "handle": "@fatimak",
       "role": "backend",
+      "institution": "Thapar Institute of Engineering & Technology",
+      "stage": "Final Year • B.Tech Computer Engineering",
+      "status": "Developing high-throughput microservices in Go and Python with Redis caching",
       "blurb": "Backend and the databases underneath it. I like boring technology that is still working five years later.",
+      "location": "Patiala, India",
       "interests": [
         "coding",
         "data"
@@ -265,18 +309,22 @@
         "linux",
         "testing"
       ],
-      "followers": 523,
       "groups": [
         "builders",
         "data-circle"
-      ]
+      ],
+      "followers": 523
     },
     {
       "id": "vivek-joshi",
       "name": "Vivek Joshi",
       "handle": "@vivekj",
       "role": "dataanalyst",
+      "institution": "Savitribai Phule Pune University",
+      "stage": "Master of Science • Applied Statistics & Analytics",
+      "status": "Writing end-to-end financial forecasting models and Tableau dashboards",
       "blurb": "From a non-technical degree into analytics at 27. Writing the honest version of the transition, including the year it was slow.",
+      "location": "Pune, India",
       "interests": [
         "data",
         "finance"
@@ -288,10 +336,10 @@
         "bi",
         "communication"
       ],
-      "followers": 341,
       "groups": [
         "data-circle"
-      ]
+      ],
+      "followers": 341
     }
   ]
 }

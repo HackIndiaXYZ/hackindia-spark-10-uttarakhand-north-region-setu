@@ -324,52 +324,193 @@
     <button class="prof__close" type="button" data-profile-close aria-label="Close">&times;</button>
 
     <div class="prof__inner">
+      <!-- Profile Header View -->
       <header class="prof__head">
-        <span class="prof__avatar" data-profile-initial aria-hidden="true">F</span>
+        <div class="prof__avatar-wrap">
+          <span class="prof__avatar" data-profile-initial aria-hidden="true">F</span>
+        </div>
         <div class="prof__ident">
-          <h2 class="prof__title" id="profile-title">Your <em>Profile</em></h2>
+          <div class="prof__title-row">
+            <h2 class="prof__title" id="profile-title">Your <em>Profile</em></h2>
+            <button class="prof__edit-btn" type="button" data-profile-edit-toggle title="Edit Profile Details">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+              <span>Edit Profile</span>
+            </button>
+          </div>
           <p class="prof__email" data-profile-email></p>
+          <p class="prof__headline" data-profile-headline>Builder &bull; Master of AI Era</p>
+          <p class="prof__edu" data-profile-edu></p>
         </div>
       </header>
 
-      <dl class="prof__stats">
-        <div class="prof__stat">
-          <dt class="prof__statlabel">Following</dt>
-          <dd class="prof__statvalue" data-profile-following-count>0</dd>
+      <!-- Edit Profile Form (Hidden by default, toggled via Edit Profile button) -->
+      <form class="prof__edit-form" id="prof-edit-form" style="display: none;" novalidate>
+        <div class="prof__edit-head">
+          <h3 class="prof__edit-title">Edit Your Profile</h3>
+          <span class="prof__edit-sub">Customize how peers and mentors see you in the Era</span>
         </div>
-        <div class="prof__stat">
-          <dt class="prof__statlabel">Followers</dt>
-          <dd class="prof__statvalue" data-profile-followers-count>0</dd>
+        <div class="auth__row">
+          <label class="auth__label" for="prof-edit-name">Full Name</label>
+          <input class="inp" type="text" id="prof-edit-name" name="name" required placeholder="e.g. Dev Sharma" />
         </div>
-        <div class="prof__stat">
-          <dt class="prof__statlabel">Groups</dt>
-          <dd class="prof__statvalue" data-profile-group-count>0</dd>
+        <div class="auth__row">
+          <label class="auth__label" for="prof-edit-headline">Headline / Role</label>
+          <input class="inp" type="text" id="prof-edit-headline" name="headline" placeholder="e.g. Full-Stack Developer &amp; AI Explorer" />
         </div>
-      </dl>
+        <div class="auth__row">
+          <label class="auth__label" for="prof-edit-institution">College / School / Institute</label>
+          <input class="inp" type="text" id="prof-edit-institution" name="institution" placeholder="e.g. Delhi Technological University (DTU)" />
+        </div>
+        <div class="auth__row">
+          <label class="auth__label" for="prof-edit-stage">Academic Stage</label>
+          <select class="inp" id="prof-edit-stage" name="stage">
+            <option value="Final-Year College Student">Final-Year College Student</option>
+            <option value="3rd Year College Student">3rd Year College Student</option>
+            <option value="1st/2nd Year College Student">1st/2nd Year College Student</option>
+            <option value="Class 12th Graduate">Class 12th Graduate</option>
+            <option value="Early Career Builder">Early Career Builder</option>
+          </select>
+        </div>
+        <div class="auth__row">
+          <label class="auth__label" for="prof-edit-bio">Bio / Focus</label>
+          <textarea class="inp" id="prof-edit-bio" name="bio" rows="3" placeholder="What are you currently building or learning?"></textarea>
+        </div>
+        <div class="prof__edit-actions">
+          <button class="btn btn--solid" type="submit" style="padding: 10px 22px; font-size: 13.5px;">Save Changes</button>
+          <button class="btn btn--ghost" type="button" data-profile-edit-cancel style="padding: 10px 18px; font-size: 13.5px;">Cancel</button>
+        </div>
+      </form>
 
-      <section class="prof__block">
-        <h3 class="prof__blocktitle">Your Tags &amp; Strengths</h3>
-        <ul class="prof__tags" data-profile-tags></ul>
-        <p class="prof__empty" data-profile-tags-empty>Pick interests and skills on the Community page and they will appear here.</p>
-      </section>
+      <!-- Stats Tabs (Clicking any opens/switches the corresponding list!) -->
+      <div class="prof__stats-tabs" role="tablist" aria-label="Profile Views">
+        <button class="prof__stat-tab is-active" type="button" role="tab" id="tab-following" data-prof-tab="following" aria-selected="true" aria-controls="view-following">
+          <span class="prof__statlabel">Following</span>
+          <span class="prof__statvalue" data-profile-following-count>0</span>
+          <span class="prof__stathint">View list &rarr;</span>
+        </button>
+        <button class="prof__stat-tab" type="button" role="tab" id="tab-followers" data-prof-tab="followers" aria-selected="false" aria-controls="view-followers">
+          <span class="prof__statlabel">Followers</span>
+          <span class="prof__statvalue" data-profile-followers-count>0</span>
+          <span class="prof__stathint">View list &rarr;</span>
+        </button>
+        <button class="prof__stat-tab" type="button" role="tab" id="tab-groups" data-prof-tab="groups" aria-selected="false" aria-controls="view-groups">
+          <span class="prof__statlabel">Groups</span>
+          <span class="prof__statvalue" data-profile-group-count>0</span>
+          <span class="prof__stathint">Manage &rarr;</span>
+        </button>
+        <button class="prof__stat-tab" type="button" role="tab" id="tab-tags" data-prof-tab="tags" aria-selected="false" aria-controls="view-tags">
+          <span class="prof__statlabel">My Tags</span>
+          <span class="prof__statvalue" data-profile-tag-count>0</span>
+          <span class="prof__stathint">Skills &rarr;</span>
+        </button>
+      </div>
 
-      <section class="prof__block">
-        <h3 class="prof__blocktitle">Following</h3>
-        <ul class="prof__list" data-profile-following></ul>
-        <p class="prof__empty" data-profile-following-empty>You are not following anyone yet. Discover creators and peers below.</p>
-      </section>
+      <!-- Tab Content Views -->
+      <div class="prof__panels">
+        <!-- View 1: Following List -->
+        <section class="prof__panel is-active" id="view-following" role="tabpanel" aria-labelledby="tab-following">
+          <div class="prof__panel-head">
+            <h3 class="prof__blocktitle">People You Follow</h3>
+            <span class="prof__panel-note">Click any profile to view full student details</span>
+          </div>
+          <ul class="prof__following-list" data-profile-following-list></ul>
+          <p class="prof__empty" data-profile-following-empty>You are not following anyone yet. Discover creators and peers in the Community section.</p>
+        </section>
 
-      <section class="prof__block">
-        <h3 class="prof__blocktitle">Followers</h3>
-        <p class="prof__empty">Accounts and follows are saved in your local browser sandbox with zero tracking.</p>
-      </section>
+        <!-- View 2: Followers List -->
+        <section class="prof__panel" id="view-followers" role="tabpanel" aria-labelledby="tab-followers">
+          <div class="prof__panel-head">
+            <h3 class="prof__blocktitle">Your Followers</h3>
+            <span class="prof__panel-note">Community peers following your journey</span>
+          </div>
+          <ul class="prof__followers-list" data-profile-followers-list></ul>
+          <p class="prof__empty" data-profile-followers-empty>Zero outside tracking. Follows and connections are preserved in your local browser sandbox.</p>
+        </section>
 
-      <section class="prof__block">
-        <h3 class="prof__blocktitle">Communities &amp; Groups <span class="prof__hint" data-profile-group-hint></span></h3>
-        <ul class="prof__list" data-profile-groups></ul>
-        <p class="prof__empty" data-profile-groups-empty>You are not in any groups yet. Pick groups below to join.</p>
-        <ul class="prof__choices" data-profile-group-choices></ul>
-      </section>
+        <!-- View 3: Communities & Groups -->
+        <section class="prof__panel" id="view-groups" role="tabpanel" aria-labelledby="tab-groups">
+          <div class="prof__panel-head">
+            <h3 class="prof__blocktitle">Communities &amp; Groups <span class="prof__hint" data-profile-group-hint></span></h3>
+            <span class="prof__panel-note">Select which circles you participate in</span>
+          </div>
+          <ul class="prof__list" data-profile-groups></ul>
+          <p class="prof__empty" data-profile-groups-empty>You are not in any groups yet. Pick groups below to join.</p>
+          <ul class="prof__choices" data-profile-group-choices></ul>
+        </section>
+
+        <!-- View 4: Tags & Strengths -->
+        <section class="prof__panel" id="view-tags" role="tabpanel" aria-labelledby="tab-tags">
+          <div class="prof__panel-head">
+            <h3 class="prof__blocktitle">Your Selected Strengths &amp; Tags</h3>
+            <span class="prof__panel-note">Used to calculate peer match percentages</span>
+          </div>
+          <ul class="prof__tags" data-profile-tags></ul>
+          <p class="prof__empty" data-profile-tags-empty>Pick interests and skills on the Community page and they will appear here.</p>
+        </section>
+      </div>
+
+    </div>
+  </dialog>
+
+  <!-- ============ STUDENT / PEER DETAIL MODAL ============ -->
+  <dialog class="person-dialog" id="person-detail-dialog" aria-labelledby="person-detail-name">
+    <button class="person-dialog__close" type="button" data-person-dialog-close aria-label="Close">&times;</button>
+    <div class="person-dialog__inner">
+      <div class="person-dialog__banner"></div>
+      
+      <div class="person-dialog__header">
+        <div class="person-dialog__avatar" id="person-detail-avatar">FE</div>
+        <div class="person-dialog__ident">
+          <div class="person-dialog__namerow">
+            <h2 class="person-dialog__name" id="person-detail-name">Student Name</h2>
+            <span class="person-dialog__handle" id="person-detail-handle">@handle</span>
+          </div>
+          <div class="person-dialog__meta">
+            <span class="person-dialog__role" id="person-detail-role">Role</span>
+            <span class="person-dialog__score" id="person-detail-score">Match</span>
+          </div>
+          <p class="person-dialog__edu" id="person-detail-edu">🎓 Institution &bull; Stage</p>
+        </div>
+      </div>
+
+      <div class="person-dialog__body">
+        <div class="person-dialog__sec">
+          <h4 class="person-dialog__sectitle">Current Focus / Status</h4>
+          <p class="person-dialog__status" id="person-detail-status">Status</p>
+        </div>
+
+        <div class="person-dialog__sec">
+          <h4 class="person-dialog__sectitle">About Journey</h4>
+          <p class="person-dialog__blurb" id="person-detail-blurb">Blurb</p>
+        </div>
+
+        <div class="person-dialog__sec">
+          <h4 class="person-dialog__sectitle">Technical Skills</h4>
+          <div class="person-dialog__chips" id="person-detail-skills"></div>
+        </div>
+
+        <div class="person-dialog__sec">
+          <h4 class="person-dialog__sectitle">Interests &amp; Topics</h4>
+          <div class="person-dialog__chips" id="person-detail-interests"></div>
+        </div>
+
+        <div class="person-dialog__sec">
+          <h4 class="person-dialog__sectitle">Active Groups</h4>
+          <div class="person-dialog__groups" id="person-detail-groups"></div>
+        </div>
+      </div>
+
+      <div class="person-dialog__footer">
+        <div class="person-dialog__foot-stat">
+          <span class="person-dialog__followers-count" id="person-detail-followers">0</span>
+          <span class="person-dialog__followers-label">Followers in FutureEra</span>
+        </div>
+        <div class="person-dialog__foot-actions">
+          <button class="follow-btn person-dialog__follow-btn" type="button" id="person-detail-follow-btn" data-detail-follow="">
+            + Follow
+          </button>
+        </div>
+      </div>
     </div>
   </dialog>
 
