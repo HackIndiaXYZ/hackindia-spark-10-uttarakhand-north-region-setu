@@ -17,7 +17,7 @@ from pathlib import Path
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, Response
+from fastapi.responses import FileResponse, Response, JSONResponse
 
 from app.config import GEMINI_API_KEY
 from app.schemas import (
@@ -42,12 +42,16 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 STATIC_DIR = os.path.join(BASE_DIR, "static")
 DATA_DIR = os.path.join(BASE_DIR, "data")
 DATA_FILE = os.path.join(DATA_DIR, "career_data.json")
+PEOPLE_FILE = os.path.join(DATA_DIR, "people.json")
 
 # --- Career data (from Harshit's infoproject) ---
 REQUIRED_KEYS = (
     "RESOURCES", "STREAMS", "DURATIONS", "DEGREES", "INTERESTS",
     "HOBBIES", "SKILLS", "ROLES", "PHASES", "GENERIC_ITEM", "GENERIC_PHASES",
 )
+
+INTEREST_WEIGHT = 60
+SKILL_WEIGHT = 40
 
 @lru_cache(maxsize=1)
 def load_career_data() -> dict:
@@ -70,6 +74,120 @@ def career_payload() -> tuple:
     body = json.dumps(data, separators=(",", ":"))
     etag = '"' + hashlib.sha256(body.encode("utf-8")).hexdigest()[:32] + '"'
     return body, etag
+
+@lru_cache(maxsize=1)
+def load_groups() -> dict:
+    """Read groups from people.json."""
+    people_path = Path(PEOPLE_FILE)
+    if not people_path.exists():
+        return {}
+    data = json.loads(people_path.read_text(encoding="utf-8"))
+    return data.get("GROUPS", {})
+
+@lru_cache(maxsize=1)
+def load_people() -> list:
+    """Read people list from people.json."""
+    people_path = Path(PEOPLE_FILE)
+    if not people_path.exists():
+        return []
+    data = json.loads(people_path.read_text(encoding="utf-8"))
+    return data.get("PEOPLE", [])
+
+def score_tags(
+    my_interests: set[str],
+    my_skills: set[str],
+    have_interests: set[str],
+    have_skills: set[str],
+) -> tuple[int | None, list[str], list[str]]:
+    """Score tags between user and member/group."""
+    shared_i = sorted(my_interests & have_interests)
+    shared_s = sorted(my_skills & have_skills)
+    if not my_interests and not my_skills:
+        return None, shared_i, shared_s
+
+    parts = 0.0
+    score = 0.0
+    if my_interests:
+        parts += INTEREST_WEIGHT
+        score += INTEREST_WEIGHT * (len(shared_i) / len(my_interests))
+    if my_skills:
+        parts += SKILL_WEIGHT
+        score += SKILL_WEIGHT * (len(shared_s) / len(my_skills))
+
+    return round(score * 100 / parts), shared_i, shared_s
+
+def match_people(my_interests: set[str], my_skills: set[str]) -> list[dict]:
+    """Score every member against visitor's picks and sort best first."""
+    scored: list[dict] = []
+    career = load_career_data()
+    roles = career.get("ROLES", {})
+    for person in load_people():
+        score, shared_i, shared_s = score_tags(
+            my_interests,
+            my_skills,
+            set(person.get("interests") or []),
+            set(person.get("skills") or []),
+        )
+        role = person.get("role")
+        scored.append({
+            "id": person["id"],
+            "name": person["name"],
+            "handle": person.get("handle", ""),
+            "role": role,
+            "roleLabel": roles.get(role, {}).get("label", ""),
+            "blurb": person.get("blurb", ""),
+            "interests": person.get("interests") or [],
+            "skills": person.get("skills") or [],
+            "groups": person.get("groups") or [],
+            "followers": person.get("followers", 0),
+            "match": {"score": score, "interests": shared_i, "skills": shared_s},
+        })
+    scored.sort(key=lambda p: (p["match"]["score"] is None, -(p["match"]["score"] or 0), -p["followers"], p["name"]))
+    return scored
+
+def match_groups(my_interests: set[str], my_skills: set[str]) -> list[dict]:
+    """Rank groups by member tag match."""
+    people = load_people()
+    rows: list[dict] = []
+    for gid, group in load_groups().items():
+        members = [p for p in people if gid in (p.get("groups") or [])]
+        group_interests: set[str] = set()
+        group_skills: set[str] = set()
+        for person in members:
+            group_interests |= set(person.get("interests") or [])
+            group_skills |= set(person.get("skills") or [])
+
+        score, shared_i, shared_s = score_tags(
+            my_interests, my_skills, group_interests, group_skills
+        )
+        sharing = [
+            p for p in members
+            if (my_interests & set(p.get("interests") or []))
+            or (my_skills & set(p.get("skills") or []))
+        ]
+        rows.append({
+            "id": gid,
+            "label": group["label"],
+            "blurb": group.get("blurb", ""),
+            "members": len(members),
+            "matches": len(sharing),
+            "names": [p["name"] for p in sharing[:3]],
+            "match": {"score": score, "interests": shared_i, "skills": shared_s},
+        })
+    rows.sort(key=lambda g: (
+        g["match"]["score"] is None,
+        -(g["match"]["score"] or 0),
+        -g["matches"],
+        -g["members"],
+        g["label"],
+    ))
+    return rows
+
+def split_tags(raw: str | None) -> set[str]:
+    """Read a comma separated tag list."""
+    if not raw:
+        return set()
+    return {t.strip() for t in raw.split(",") if t.strip()}
 
 
 # --- App ---
@@ -136,6 +254,12 @@ async def serve_stage():
     return FileResponse(os.path.join(STATIC_DIR, "stage.html"), headers=NO_CACHE_HEADERS)
 
 
+@app.get("/community")
+async def serve_community():
+    """Serves the Community page."""
+    return FileResponse(os.path.join(STATIC_DIR, "community.html"), headers=NO_CACHE_HEADERS)
+
+
 @app.get("/privacy")
 async def serve_privacy():
     """Serves the privacy policy page."""
@@ -193,6 +317,57 @@ def career_data(request: Request) -> Response:
 async def db_stats():
     """Returns database telemetry and count of cached blueprints & suggestions."""
     return get_database_stats()
+
+
+@app.get("/api/people")
+def get_people(request: Request) -> JSONResponse:
+    """The community member list, ranked against visitor's tags."""
+    career = load_career_data()
+    valid_interests = {i["id"] for i in career.get("INTERESTS", [])}
+    valid_skills = {s["id"] for s in career.get("SKILLS", [])}
+    my_interests = split_tags(request.query_params.get("interests")) & valid_interests
+    my_skills = split_tags(request.query_params.get("skills")) & valid_skills
+
+    return JSONResponse(
+        {
+            "interests": [{"id": i["id"], "label": i["label"]} for i in career.get("INTERESTS", [])],
+            "skills": [{"id": s["id"], "label": s["label"]} for s in career.get("SKILLS", [])],
+            "people": match_people(my_interests, my_skills),
+            "groups": match_groups(my_interests, my_skills),
+            "mine": {
+                "interests": sorted(my_interests),
+                "skills": sorted(my_skills),
+                "ranked": bool(my_interests or my_skills),
+            },
+            "weights": {"interest": INTEREST_WEIGHT, "skill": SKILL_WEIGHT},
+        },
+        headers={"Cache-Control": "no-store"},
+    )
+
+
+@app.get("/api/groups")
+def get_groups() -> JSONResponse:
+    """The group registry for the profile popup."""
+    registry = load_groups()
+    people = load_people()
+    sizes = {
+        gid: sum(1 for p in people if gid in (p.get("groups") or []))
+        for gid in registry
+    }
+    return JSONResponse(
+        {
+            "groups": [
+                {
+                    "id": gid,
+                    "label": g["label"],
+                    "blurb": g.get("blurb", ""),
+                    "members": sizes.get(gid, 0),
+                }
+                for gid, g in registry.items()
+            ],
+        },
+        headers={"Cache-Control": "no-store"},
+    )
 
 
 @app.post("/api/analyze", response_model=CareerBlueprintResponse)
